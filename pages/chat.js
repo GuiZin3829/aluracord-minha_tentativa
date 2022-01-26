@@ -3,8 +3,13 @@ import React from 'react';
 import appConfig from '../config.json';
 
 export default function ChatPage() {
-    const urlparametros = new URLSearchParams(window.location.search);
-    const oUsuario = urlparametros.get('username');
+
+    if( typeof document != 'undefined' )  {
+        const urlparametros = new URLSearchParams(document.location.search)
+        var oUsuario = urlparametros.get('username');
+    } else {
+        var oUsuario = "GuiZin3829"
+    }
     const [mensagem, setMensagem] = React.useState('')
     const [listaDeMensagem, setListaDeMensagem] = React.useState([])
     // Usuário
@@ -70,7 +75,7 @@ export default function ChatPage() {
                         padding: '16px',
                     }}
                 >
-                    <MessageList mensagens={listaDeMensagem} nome={oUsuario}/>
+                    <MessageList mensagens={listaDeMensagem} nome={oUsuario} setListaDeMensagem={setListaDeMensagem}/>
                     {/*{listaDeMensagem.map((mensagemAtual) => {
                         return (
                             <li key={mensagemAtual.id}>
@@ -144,6 +149,18 @@ function Header() {
 }
 
 function MessageList(props) {
+    function handleDeleteMessage(mensagemId){
+        let novaLista = props.mensagens.filter((message)=>{
+            if(message.id != mensagemId){
+                return message
+            }
+        })
+
+        props.setListaDeMensagem([
+            ...novaLista
+        ])
+    }
+
     return (
         <Box
             tag="ul"
@@ -188,6 +205,14 @@ function MessageList(props) {
                             <Text tag="strong">
                                 {mensagem.de}
                             </Text>
+
+                            <Button
+                            type="button"
+                            label="Apagar"
+                            styleSheet={{width: '50px', height: '20px', marginLeft: '10px'}}
+                            onClick={() => handleDeleteMessage(mensagem.id)}
+                            
+                            />
                             <Text
                                 styleSheet={{
                                     fontSize: '10px',
