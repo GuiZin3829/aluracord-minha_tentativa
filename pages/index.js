@@ -20,6 +20,7 @@ function Titulo(argumento) {
     );
 }
 
+
 // componente react
 //function HomePage() {
 //    // JSX
@@ -34,6 +35,7 @@ function Titulo(argumento) {
 //export default HomePage
 
 export default function PaginaInicial() {
+
     //const username = 'GuiZin3829';
     const [username, setUsername]= React.useState('GuiZin3829');
     const roteamento = useRouter();
@@ -152,11 +154,7 @@ export default function PaginaInicial() {
                                 borderRadius: '50%',
                                 marginBottom: '16px',
                             }}
-                            src={
-                                username.length > 2
-                                ? `https://github.com/${username}.png`
-                                : image
-                            }
+                            src={username.length > 2 ? `https://github.com/${username}.png` : image}
                         />
                         <Text
                             variant="body4"

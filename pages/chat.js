@@ -1,6 +1,11 @@
 import { Box, Text, TextField, Image, Button } from '@skynexui/components';
 import React from 'react';
 import appConfig from '../config.json';
+import { createClient } from '@supabase/supabase-js'
+
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTY0MzI4NTAwNSwiZXhwIjoxOTU4ODYxMDA1fQ.61C0vCF2V75XvN_W90CiA3nXXBavMTtcNfyCUMXMgI0'
+const SUPABASE_URL = 'https://hkaptqusamkbxcooqnsh.supabase.co'
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
 export default function ChatPage() {
 
@@ -10,8 +15,10 @@ export default function ChatPage() {
     } else {
         var oUsuario = "GuiZin3829"
     }
+
     const [mensagem, setMensagem] = React.useState('')
     const [listaDeMensagem, setListaDeMensagem] = React.useState([])
+    const [opacidade, setOpacity] = React.useState("0")
     // Usuário
     /*
     - usuario digita no campo textArea
@@ -22,19 +29,44 @@ export default function ChatPage() {
     // Dev
     /* 
     - [X] Campo criado
-    - [ ] Vamos usar o onChange usa o useState (ter if pra caso seja enter para limpar a variavel)
-    - [ ] lista de mensagem
+    - [X] Vamos usar o onChange usa o useState (ter if pra caso seja enter para limpar a variavel)
+    - [X] lista de mensagem
     */
+
+    React.useEffect(() => {
+        supabaseClient
+            .from('mensagens')
+            .select('*')
+            .order('id', { ascending: false })
+            .then(({ data }) => {
+                console.log('Dados da Consulta: ', data)
+                setListaDeMensagem(data)
+            });
+    }, []);
+    
+
+
     function handleNovaMensagem(novaMensagem) {
         const mensagem = {
-            id: listaDeMensagem.length + 1,
+            //id: listaDeMensagem.length + 1,
             de: oUsuario,
             texto: novaMensagem
         }
-        setListaDeMensagem([
-            mensagem,
-            ...listaDeMensagem,
-        ])
+
+        supabaseClient
+            .from('mensagens')
+            .insert([
+                // tem que ser um objeto com os MESMOS CAMPOS que você escreveu no supabase
+                mensagem
+            ])
+            .then(({ data }) => {
+                console.log('Criando mensagem: ', data)
+                setListaDeMensagem([
+                    data[0],
+                    ...listaDeMensagem,
+                ])
+            })
+
         setMensagem('');
     }
 
@@ -62,6 +94,48 @@ export default function ChatPage() {
                     padding: '32px',
                 }}
             >
+                <Button 
+                type="button" 
+                label="🤠"
+                styleSheet={{
+                    width: '50px'
+                }}
+                colorVariant="dark"
+                onClick={() => handleNovaMensagem("🤠") }
+                />
+                <Button 
+                type="button" 
+                label="👌"
+                styleSheet={{
+                    width: '50px',
+                    marginLeft: '60px',
+                    marginTop: '-36px'
+                }}
+                colorVariant="dark"
+                onClick={() => handleNovaMensagem("👌") }
+                />
+                <Button 
+                type="button" 
+                label="⚔️"
+                styleSheet={{
+                    width: '50px',
+                    marginLeft: '120px',
+                    marginTop: '-37px'
+                }}
+                colorVariant="dark"
+                onClick={() => handleNovaMensagem("⚔️") }
+                />
+                <Button 
+                type="button" 
+                label="🎮"
+                styleSheet={{
+                    width: '50px',
+                    marginLeft: '180px',
+                    marginTop: '-37px'
+                }}
+                colorVariant="dark"
+                onClick={() => handleNovaMensagem("🎮") }
+                />
                 <Header />
                 <Box
                     styleSheet={{
@@ -75,7 +149,31 @@ export default function ChatPage() {
                         padding: '16px',
                     }}
                 >
-                    <MessageList mensagens={listaDeMensagem} nome={oUsuario} setListaDeMensagem={setListaDeMensagem}/>
+                    <Text 
+                    variant="body3"
+                    styleSheet={{
+                        backgroundColor: 'rgba(0,0,0,.9)',
+                        width: '250px',
+                        padding: '10px',
+                        opacity: opacidade,
+                        transition: 'opacity 1s'
+                    }}
+
+                    >
+                        Carregando as Mensagens
+                    </Text>
+
+                    <Image 
+                    src="https://upload.wikimedia.org/wikipedia/commons/b/b9/Youtube_loading_symbol_1_(wobbly).gif"
+                    styleSheet={{
+                        width: '35px',
+                        marginLeft: '200px',
+                        marginTop: '-35px',
+                        opacity: opacidade
+                    }}
+                    />
+
+                    <MessageList mensagens={listaDeMensagem} setListaDeMensagem={setListaDeMensagem}/>
                     {/*{listaDeMensagem.map((mensagemAtual) => {
                         return (
                             <li key={mensagemAtual.id}>
@@ -102,6 +200,7 @@ export default function ChatPage() {
                                 if (event.key === 'Enter') {
                                     event.preventDefault();
                                     handleNovaMensagem(mensagem);
+                                    setOpacity("0.8")
                                 }
                             }}
                             placeholder="Insira sua mensagem aqui..."
@@ -127,7 +226,7 @@ export default function ChatPage() {
                 </Box>
             </Box>
         </Box>
-    )
+    ) 
 }
 
 function Header() {
@@ -149,7 +248,7 @@ function Header() {
 }
 
 function MessageList(props) {
-    function handleDeleteMessage(mensagemId){
+    async function handleDeleteMessage(mensagemId){
         let novaLista = props.mensagens.filter((message)=>{
             if(message.id != mensagemId){
                 return message
@@ -159,6 +258,11 @@ function MessageList(props) {
         props.setListaDeMensagem([
             ...novaLista
         ])
+
+        const { data, error } = await supabaseClient
+            .from('mensagens')
+            .delete()
+            .match({ id: mensagemId })
     }
 
     return (
@@ -191,7 +295,7 @@ function MessageList(props) {
                             styleSheet={{
                                 marginBottom: '8px',
                             }}
-                        >
+                        >   
                             <Image
                                 styleSheet={{
                                     width: '20px',
@@ -200,7 +304,7 @@ function MessageList(props) {
                                     display: 'inline-block',
                                     marginRight: '8px',
                                 }}
-                                src={`https://github.com/` + props.nome + `.png`}
+                                src={`https://github.com/${mensagem.de}.png`}
                             />
                             <Text tag="strong">
                                 {mensagem.de}
