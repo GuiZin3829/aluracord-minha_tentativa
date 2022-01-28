@@ -2,10 +2,20 @@ import { Box, Text, TextField, Image, Button } from '@skynexui/components';
 import React from 'react';
 import appConfig from '../config.json';
 import { createClient } from '@supabase/supabase-js'
+import { ButtonSendStickers } from '../src/components/ButtonSendStickers'
 
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTY0MzI4NTAwNSwiZXhwIjoxOTU4ODYxMDA1fQ.61C0vCF2V75XvN_W90CiA3nXXBavMTtcNfyCUMXMgI0'
 const SUPABASE_URL = 'https://hkaptqusamkbxcooqnsh.supabase.co'
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
+function EscutaMensagem(adicionaMensagem) {
+    return supabaseClient
+        .from('mensagens')
+        .on('INSERT', (respostaLive) => {
+            adicionaMensagem(respostaLive.new)
+        })
+        .subscribe()
+}
 
 export default function ChatPage() {
 
@@ -17,8 +27,20 @@ export default function ChatPage() {
     }
 
     const [mensagem, setMensagem] = React.useState('')
-    const [listaDeMensagem, setListaDeMensagem] = React.useState([])
-    const [opacidade, setOpacity] = React.useState("0")
+    const [listaDeMensagem, setListaDeMensagem] = React.useState([
+        //{
+        //    id: 1,
+        //    de: 'GuiZin3829',
+        //    texto: ':sticker: https://www.alura.com.br/imersao-react-4/assets/figurinhas/Figurinha_1.png'
+        //},
+        //{
+        //    id: 2,
+        //    de: 'peas',
+        //    texto: 'ternario'
+        //}
+    ])
+
+
     // Usuário
     /*
     - usuario digita no campo textArea
@@ -39,9 +61,19 @@ export default function ChatPage() {
             .select('*')
             .order('id', { ascending: false })
             .then(({ data }) => {
-                console.log('Dados da Consulta: ', data)
+                //console.log('Dados da Consulta: ', data)
                 setListaDeMensagem(data)
             });
+    
+            EscutaMensagem((novaMensagem) => {
+                //console.log('novaMensagem', novaMensagem)
+                setListaDeMensagem((valorAtualDaLista) => {
+                    return [
+                        novaMensagem,
+                        ...valorAtualDaLista,
+                    ]
+                })
+            })
     }, []);
     
 
@@ -60,11 +92,7 @@ export default function ChatPage() {
                 mensagem
             ])
             .then(({ data }) => {
-                console.log('Criando mensagem: ', data)
-                setListaDeMensagem([
-                    data[0],
-                    ...listaDeMensagem,
-                ])
+                //console.log('Criando mensagem: ', data)
             })
 
         setMensagem('');
@@ -136,6 +164,7 @@ export default function ChatPage() {
                 colorVariant="dark"
                 onClick={() => handleNovaMensagem("🎮") }
                 />
+
                 <Header />
                 <Box
                     styleSheet={{
@@ -149,7 +178,7 @@ export default function ChatPage() {
                         padding: '16px',
                     }}
                 >
-                    <Text 
+                    {/*<Text 
                     variant="body3"
                     styleSheet={{
                         backgroundColor: 'rgba(0,0,0,.9)',
@@ -171,7 +200,7 @@ export default function ChatPage() {
                         marginTop: '-35px',
                         opacity: opacidade
                     }}
-                    />
+                    />*/}
 
                     <MessageList mensagens={listaDeMensagem} setListaDeMensagem={setListaDeMensagem}/>
                     {/*{listaDeMensagem.map((mensagemAtual) => {
@@ -200,7 +229,7 @@ export default function ChatPage() {
                                 if (event.key === 'Enter') {
                                     event.preventDefault();
                                     handleNovaMensagem(mensagem);
-                                    setOpacity("0.8")
+                                    //setOpacity("0.8")
                                 }
                             }}
                             placeholder="Insira sua mensagem aqui..."
@@ -216,6 +245,15 @@ export default function ChatPage() {
                                 color: appConfig.theme.colors.neutrals[200],
                             }}
                         />
+                        
+                        {/* Call Back */}
+                        < ButtonSendStickers 
+                            onStickerClick={(sticker) => {
+                                //console.log('Salva esse sticker no banco', sticker)
+                                handleNovaMensagem(':sticker: ' + sticker)
+                            }}
+                        />
+
                         <Button 
                         type="button" 
                         label="Enviar" 
@@ -248,6 +286,7 @@ function Header() {
 }
 
 function MessageList(props) {
+
     async function handleDeleteMessage(mensagemId){
         let novaLista = props.mensagens.filter((message)=>{
             if(message.id != mensagemId){
@@ -287,7 +326,7 @@ function MessageList(props) {
                             padding: '6px',
                             marginBottom: '12px',
                             hover: {
-                                backgroundColor: appConfig.theme.colors.neutrals[700],
+                                backgroundColor: appConfig.theme.colors.neutrals["700"],
                             }
                         }}
                     >
@@ -296,17 +335,36 @@ function MessageList(props) {
                                 marginBottom: '8px',
                             }}
                         >   
-                            <Image
+                            
+                            <Text tag="strong"
+                                styleSheet={{
+                                    fontSize: '15pt',
+                                    marginLeft: '105px',
+                                    display: 'flex',
+                                    position: 'absolute',
+                                    opacity: '0',
+                                }}
+                                >
+                                github.com/{mensagem.de}
+                            </Text>
+
+                            <a href={`github.com/${mensagem.de}`} target="_blank"><Image
                                 styleSheet={{
                                     width: '20px',
                                     height: '20px',
                                     borderRadius: '50%',
                                     display: 'inline-block',
                                     marginRight: '8px',
-                                }}
+                                    transition: 'width .75s, height .75s',
+                                    hover: {
+                                        width: '100px',
+                                        height: '100px'
+                                    },
+                                    }
+                                }
                                 src={`https://github.com/${mensagem.de}.png`}
-                            />
-                            <Text tag="strong">
+                            /></a>
+                            <Text tag="strong" styleSheet={{}}>
                                 {mensagem.de}
                             </Text>
 
@@ -317,6 +375,7 @@ function MessageList(props) {
                             onClick={() => handleDeleteMessage(mensagem.id)}
                             
                             />
+
                             <Text
                                 styleSheet={{
                                     fontSize: '10px',
@@ -327,8 +386,20 @@ function MessageList(props) {
                             >
                                 {(new Date().toLocaleDateString())}
                             </Text>
+
                         </Box>
-                        {mensagem.texto}
+                        {/*Condicional: {mensagem.texto.startsWith(':sticker:').toString()}*/}
+                        {mensagem.texto.startsWith(':sticker:')
+                        ? (
+                            <Image src={mensagem.texto.replace(':sticker:', '')} 
+                            styleSheet={{
+                                width: '40%',
+                                height: '60%',
+                            }}/>
+                        )
+                        : (
+                            mensagem.texto
+                        )}
                     </Text>
                 )
             })}
